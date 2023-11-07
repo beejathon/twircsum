@@ -10,17 +10,54 @@ datasource db {
   url = env("DATABASE_URL")
   relationMode = "prisma"
 }
-  
-model Post {
-    id        Int      @id @default(autoincrement())
+
+model Message {
+    id        String      @id @default(uuid())
+    text      String
+    createdAt DateTime @default(now())
+    authorId  String
+    author    User     @relation(fields: [authorId], references: [id])
+    channelId String
+    channel   Channel  @relation(fields: [channelId], references: [id])
+
+    @@index([text])
+    @@index([authorId])
+    @@index([channelId])
+}
+
+model Channel {
+    id        String      @id @default(uuid())
     name      String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    ownerId   String
+    owner     User     @relation("ChannelOwner", fields: [ownerId], references: [id])
+    messages  Message[]
+    users     User[] @relation("ChannelUser")
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+    @@index([ownerId])
+}
 
-    @@index([name])
+model DirectMessage {
+    id        String      @id @default(uuid())
+    text      String
+    createdAt DateTime @default(now())
+    authorId  String
+    author    User     @relation(fields: [authorId], references: [id])
+    chatId    String
+    chat      DirectMessageChat @relation(fields: [chatId], references: [id])
+    
+    @@index([text])
+    @@index([authorId])
+    @@index([chatId])
+}
+
+model DirectMessageChat {
+    id        String      @id @default(uuid())
+    createdAt DateTime @default(now())
+    messages  DirectMessage[]
+    users     User[] @relation("DirectMessageChatUser")
+
 }
 
 // Necessary for Next auth
@@ -60,7 +97,11 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    messages      Message[]
+    channels      Channel[] @relation("ChannelUser")
+    channelsOwned Channel[] @relation("ChannelOwner")
+    directMessageChats DirectMessageChat[] @relation("DirectMessageChatUser")
+    directMessages     DirectMessage[]
 }
 
 model VerificationToken {

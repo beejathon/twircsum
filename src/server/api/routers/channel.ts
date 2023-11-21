@@ -6,7 +6,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 
-export const channelsRouter = createTRPCRouter({
+export const channelRouter = createTRPCRouter({
   // create: protectedProcedure
   //   .input(z.object({ name: z.string().min(1) }))
   //   .mutation(async ({ ctx, input }) => {

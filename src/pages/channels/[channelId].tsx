@@ -1,4 +1,5 @@
 import { useParams } from "next/navigation";
+import { ChatInput } from "~/components/ChatInput";
 import { MessageWindow } from "~/components/MessagesWindow";
 
 const Channel = () => {
@@ -7,6 +8,7 @@ const Channel = () => {
   return (
     <>
       <MessageWindow channelId={params?.channelId} />
+      <ChatInput channelId={params?.channelId} />
     </>
   );
 };

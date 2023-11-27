@@ -22,7 +22,7 @@ export const MessageWindow = (props: MessagesWindowProps) => {
     channelId: props.channelId,
   });
 
-  const [messages, setMessages] = useState<Messages | undefined>([]);
+  const [messages, setMessages] = useState<Messages>([]);
 
   useEffect(() => {
     if (data) {
@@ -32,7 +32,7 @@ export const MessageWindow = (props: MessagesWindowProps) => {
     pusherClient.subscribe(toPusherKey(`channel:${props.channelId}`));
 
     const messageHandler = (newMessage: NewMessage) => {
-      setMessages((prev) => [...(prev as Messages), newMessage]);
+      setMessages((prev) => [...prev, newMessage]);
     };
 
     pusherClient.bind("new-message", messageHandler);
@@ -43,17 +43,17 @@ export const MessageWindow = (props: MessagesWindowProps) => {
     };
   }, [props.channelId, data]);
 
-  if (!data || !data.length) {
+  if (!data?.length) {
     return <div>Nothing here yet...</div>;
   }
 
   return (
-    <>
+    <div id="chat-window">
       {messages?.map(({ message, author }) => (
         <div key={message.id}>
           {author?.name}:{message.text}
         </div>
       ))}
-    </>
+    </div>
   );
 };

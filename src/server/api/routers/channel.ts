@@ -5,6 +5,8 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { pusherServerClient } from "~/server/pusher";
+import { toPusherKey } from "~/utils/helpers";
 
 export const channelRouter = createTRPCRouter({
   // create: protectedProcedure
@@ -26,13 +28,73 @@ export const channelRouter = createTRPCRouter({
     return ctx.db.channel.findMany();
   }),
 
-  getLatest: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.channel.findFirst({
-      orderBy: { createdAt: "desc" },
-    });
-  }),
+  getUsers: protectedProcedure
+    .input(z.object({ channelId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const users = await ctx.db.channel
+        .findFirst({
+          where: { id: input.channelId },
+        })
+        .users();
 
-  getSecretMessage: protectedProcedure.query(() => {
-    return "you can now see this secret message!";
-  }),
+      return users;
+    }),
+
+  userJoin: protectedProcedure
+    .input(z.object({ channelId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findFirst({
+        where: { id: ctx.session.user.id },
+      });
+
+      await ctx.db.channel.update({
+        where: { id: input.channelId },
+        data: {
+          users: {
+            connect: {
+              id: ctx.session.user.id,
+            },
+          },
+        },
+      });
+
+      await pusherServerClient.trigger(
+        toPusherKey(`channel-users:${input.channelId}`),
+        "user-join",
+        user,
+      );
+
+      console.log(`user ${user?.name} joined channel ${input.channelId}`);
+
+      return user;
+    }),
+
+  userLeave: protectedProcedure
+    .input(z.object({ channelId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findFirst({
+        where: { id: ctx.session.user.id },
+      });
+
+      await ctx.db.channel.update({
+        where: { id: input.channelId },
+        data: {
+          users: {
+            disconnect: {
+              id: ctx.session.user.id,
+            },
+          },
+        },
+      });
+
+      await pusherServerClient.trigger(
+        toPusherKey(`channel-users:${input.channelId}`),
+        "user-leave",
+        user,
+      );
+
+      console.log(`user ${user?.name} left channel ${input.channelId}`);
+
+      return user;
+    }),
 });

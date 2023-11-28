@@ -9,20 +9,18 @@ import { pusherServerClient } from "~/server/pusher";
 import { toPusherKey } from "~/utils/helpers";
 
 export const channelRouter = createTRPCRouter({
-  // create: protectedProcedure
-  //   .input(z.object({ name: z.string().min(1) }))
-  //   .mutation(async ({ ctx, input }) => {
-  //     // simulate a slow db call
-  //     await new Promise((resolve) => setTimeout(resolve, 1000));
+  create: protectedProcedure
+    .input(z.object({ name: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const channel = await ctx.db.channel.create({
+        data: {
+          name: input.name,
+          ownerId: ctx.session.user.id,
+        },
+      });
 
-  //     return ctx.db.channel.create({
-  //       data: {
-  //         name: input.name,
-  //         ownerId: ctx.user!.id,
-
-  //       },
-  //     });
-  //   }),
+      return channel;
+    }),
 
   getAll: publicProcedure.query(({ ctx }) => {
     return ctx.db.channel.findMany();

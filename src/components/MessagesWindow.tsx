@@ -28,7 +28,9 @@ export const MessageWindow = (props: MessagesWindowProps) => {
     if (data) {
       setMessages(data);
     }
+  }, [data]);
 
+  useEffect(() => {
     pusherClient.subscribe(toPusherKey(`channel:${props.channelId}`));
 
     const messageHandler = (newMessage: NewMessage) => {
@@ -36,6 +38,8 @@ export const MessageWindow = (props: MessagesWindowProps) => {
     };
 
     pusherClient.bind("new-message", messageHandler);
+
+    console.log("listening for new messages");
 
     return () => {
       pusherClient.unsubscribe(toPusherKey(`channel:${props.channelId}`));
